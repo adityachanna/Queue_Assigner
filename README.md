@@ -48,17 +48,17 @@ fastapi-app
 To run the FastAPI application, execute the following command:
 
 ```
-uvicorn app.main:app --reload
+uvicorn main:app --reload --port 8002
 ```
 
-You can then access the application at `http://127.0.0.1:8000`.
+You can then access the application at `http://127.0.0.1:8002`.
 
 ## API Documentation
 
 The automatically generated API documentation can be accessed at:
 
-- Swagger UI: `http://127.0.0.1:8000/docs`
-- ReDoc: `http://127.0.0.1:8000/redoc`
+- Swagger UI: `http://127.0.0.1:8002/docs`
+- ReDoc: `http://127.0.0.1:8002/redoc`
 
 ## Contributing
 
