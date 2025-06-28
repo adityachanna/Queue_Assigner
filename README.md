@@ -12,6 +12,8 @@ fastapi-app
 │   ├── schemas.py      # Pydantic schemas for request and response validation
 │   └── utils.py        # Utility functions for common operations
 ├── requirements.txt     # List of dependencies for the application
+├── cert.pem            # SSL certificate for HTTPS (generated)
+├── key.pem             # SSL private key for HTTPS (generated)
 └── README.md            # Documentation for the project
 ```
 
@@ -43,22 +45,30 @@ fastapi-app
    pip install -r requirements.txt
    ```
 
+5. Generate SSL certificates for HTTPS (development only):
+   ```
+   openssl req -x509 -newkey rsa:4096 -nodes -out cert.pem -keyout key.pem -days 365
+   ```
+   When prompted for the Common Name (CN), enter `localhost` or `127.0.0.1`.
+
 ## Usage
 
-To run the FastAPI application, execute the following command:
+To run the FastAPI application with HTTPS support, execute the following command:
 
 ```
-uvicorn main:app --reload --port 8002
+uvicorn main:app --reload --port 8002 --ssl-keyfile=key.pem --ssl-certfile=cert.pem
 ```
 
-You can then access the application at `http://127.0.0.1:8002`.
+You can then access the application at `https://127.0.0.1:8002`.
+
+**Note:** Since we're using self-signed certificates for development, your browser may show a security warning. You can safely proceed by clicking "Advanced" and then "Proceed to 127.0.0.1 (unsafe)" or similar option in your browser.
 
 ## API Documentation
 
 The automatically generated API documentation can be accessed at:
 
-- Swagger UI: `http://127.0.0.1:8002/docs`
-- ReDoc: `http://127.0.0.1:8002/redoc`
+- Swagger UI: `https://127.0.0.1:8002/docs`
+- ReDoc: `https://127.0.0.1:8002/redoc`
 
 ## Contributing
 
