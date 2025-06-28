@@ -1,14 +1,61 @@
 import axios from 'axios'
 
 // Configure base URL for the FastAPI backend
-const API_BASE_URL = 'http://127.0.0.1:8002'
+// Use relative URL if in production, or localhost for development
+const getApiBaseUrl = () => {
+  // If we're in development and the current page is HTTPS, use HTTPS for API too
+  if (window.location.protocol === 'https:' && window.location.hostname === 'localhost') {
+    return 'https://127.0.0.1:8002'
+  }
+  // If we're in development and the current page is HTTP, use HTTP for API
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://127.0.0.1:8002'
+  }
+  // For production, use relative URLs
+  return '/api'
+}
+
+const API_BASE_URL = getApiBaseUrl()
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 second timeout
 })
+
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  (config) => {
+    console.log(`Making API request to: ${config.baseURL}${config.url}`)
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  }
+)
+
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ECONNABORTED') {
+      console.error('Request timeout')
+      throw new Error('Request timeout - please check if the backend server is running')
+    }
+    if (error.message === 'Network Error') {
+      console.error('Network Error - possible CORS or protocol mismatch')
+      throw new Error('Cannot connect to backend server. Please ensure the backend is running and accessible.')
+    }
+    if (error.response) {
+      // Server responded with error status
+      console.error('Server error:', error.response.status, error.response.data)
+      throw new Error(`Server error: ${error.response.status}`)
+    }
+    throw error
+  }
+)
 
 // Types
 export interface VitalSignsData {
@@ -69,7 +116,7 @@ export const submitAssessment = async (data: VitalSignsData): Promise<Assessment
     return response.data
   } catch (error) {
     console.error('Error submitting assessment:', error)
-    throw new Error('Failed to submit assessment')
+    throw error
   }
 }
 
@@ -79,7 +126,7 @@ export const getQueue = async (): Promise<QueuePatient[]> => {
     return response.data
   } catch (error) {
     console.error('Error fetching queue:', error)
-    throw new Error('Failed to fetch queue')
+    throw error
   }
 }
 
@@ -89,7 +136,7 @@ export const getNextPatient = async (): Promise<QueuePatient> => {
     return response.data
   } catch (error) {
     console.error('Error getting next patient:', error)
-    throw new Error('Failed to get next patient')
+    throw error
   }
 }
 
@@ -98,7 +145,7 @@ export const clearQueue = async (): Promise<void> => {
     await api.delete('/queue/clear/')
   } catch (error) {
     console.error('Error clearing queue:', error)
-    throw new Error('Failed to clear queue')
+    throw error
   }
 }
 
@@ -107,7 +154,7 @@ export const updatePriorities = async (): Promise<void> => {
     await api.post('/queue/update-priorities/')
   } catch (error) {
     console.error('Error updating priorities:', error)
-    throw new Error('Failed to update priorities')
+    throw error
   }
 }
 
@@ -128,7 +175,7 @@ export const provideFeedback = async (
     })
   } catch (error) {
     console.error('Error providing feedback:', error)
-    throw new Error('Failed to provide feedback')
+    throw error
   }
 }
 

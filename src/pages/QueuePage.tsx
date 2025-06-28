@@ -8,7 +8,8 @@ import {
   RefreshCw,
   User,
   Calendar,
-  TrendingUp
+  TrendingUp,
+  AlertCircle
 } from 'lucide-react'
 import { getQueue, getNextPatient } from '../services/api'
 
@@ -25,16 +26,20 @@ interface QueuePatient {
 const QueuePage: React.FC = () => {
   const [queue, setQueue] = useState<QueuePatient[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
 
   const fetchQueue = async () => {
     try {
       setLoading(true)
+      setError(null)
       const queueData = await getQueue()
       setQueue(queueData)
       setLastUpdated(new Date())
     } catch (error) {
       console.error('Failed to fetch queue:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch queue'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -42,10 +47,13 @@ const QueuePage: React.FC = () => {
 
   const handleNextPatient = async () => {
     try {
+      setError(null)
       await getNextPatient()
       await fetchQueue() // Refresh queue after removing patient
     } catch (error) {
       console.error('Failed to get next patient:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get next patient'
+      setError(errorMessage)
     }
   }
 
@@ -132,6 +140,26 @@ const QueuePage: React.FC = () => {
         </div>
       </motion.div>
 
+      {/* Error Alert */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-50 border border-red-200 rounded-lg p-4"
+        >
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-600 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">Connection Error</h3>
+              <p className="text-sm text-red-700 mt-1">{error}</p>
+              <p className="text-xs text-red-600 mt-2">
+                Please ensure the backend server is running on the correct protocol and port.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Stats Cards */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -203,6 +231,19 @@ const QueuePage: React.FC = () => {
             <div className="flex items-center justify-center py-12">
               <RefreshCw className="w-8 h-8 animate-spin text-blue-600" />
               <span className="ml-3 text-gray-600">Loading queue...</span>
+            </div>
+          ) : error ? (
+            <div className="text-center py-12">
+              <AlertCircle className="w-16 h-16 text-red-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Unable to load queue</h3>
+              <p className="text-gray-600 mb-4">There was an error connecting to the backend server.</p>
+              <button
+                onClick={fetchQueue}
+                className="btn btn-primary"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Try Again
+              </button>
             </div>
           ) : queue.length === 0 ? (
             <div className="text-center py-12">
