@@ -3,11 +3,7 @@ import axios from 'axios'
 // Configure base URL for the FastAPI backend
 // Use relative URL if in production, or localhost for development
 const getApiBaseUrl = () => {
-  // If we're in development and the current page is HTTPS, use HTTPS for API too
-  if (window.location.protocol === 'https:' && window.location.hostname === 'localhost') {
-    return 'https://127.0.0.1:8002'
-  }
-  // If we're in development and the current page is HTTP, use HTTP for API
+  // For development, always use HTTP regardless of frontend protocol
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     return 'http://127.0.0.1:8002'
   }
