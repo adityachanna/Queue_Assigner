@@ -1,0 +1,135 @@
+import axios from 'axios'
+
+// Configure base URL for the FastAPI backend
+const API_BASE_URL = 'http://127.0.0.1:8002'
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+// Types
+export interface VitalSignsData {
+  Heart_Rate: number
+  Respiratory_Rate: number
+  Body_Temperature: number
+  Oxygen_Saturation: number
+  Systolic_Blood_Pressure: number
+  Diastolic_Blood_Pressure: number
+  Age: number
+  Gender: number
+  Weight_kg: number
+  Height_m: number
+  Derived_HRV: number
+  Derived_Pulse_Pressure: number
+  Derived_BMI: number
+  Derived_MAP: number
+}
+
+export interface AssessmentResult {
+  risk_level: string
+  confidence_score: number
+  priority_score: number
+  estimated_wait_time: number
+  timestamp: string
+  details: {
+    heart_rate: number
+    respiratory_rate: number
+    body_temperature: number
+    oxygen_saturation: number
+    systolic_blood_pressure: number
+    diastolic_blood_pressure: number
+    age: number
+    gender: number
+    weight: number
+    height: number
+    derived_hrv: number
+    derived_pulse_pressure: number
+    derived_bmi: number
+    derived_map: number
+  }
+}
+
+export interface QueuePatient {
+  patient_id: string
+  risk_level: string
+  confidence_score: number
+  priority_score: number
+  queue_position: number
+  estimated_wait_time: number
+  timestamp: string
+}
+
+// API Functions
+export const submitAssessment = async (data: VitalSignsData): Promise<AssessmentResult> => {
+  try {
+    const response = await api.post('/predict/', data)
+    return response.data
+  } catch (error) {
+    console.error('Error submitting assessment:', error)
+    throw new Error('Failed to submit assessment')
+  }
+}
+
+export const getQueue = async (): Promise<QueuePatient[]> => {
+  try {
+    const response = await api.get('/queue/')
+    return response.data
+  } catch (error) {
+    console.error('Error fetching queue:', error)
+    throw new Error('Failed to fetch queue')
+  }
+}
+
+export const getNextPatient = async (): Promise<QueuePatient> => {
+  try {
+    const response = await api.get('/queue/next/')
+    return response.data
+  } catch (error) {
+    console.error('Error getting next patient:', error)
+    throw new Error('Failed to get next patient')
+  }
+}
+
+export const clearQueue = async (): Promise<void> => {
+  try {
+    await api.delete('/queue/clear/')
+  } catch (error) {
+    console.error('Error clearing queue:', error)
+    throw new Error('Failed to clear queue')
+  }
+}
+
+export const updatePriorities = async (): Promise<void> => {
+  try {
+    await api.post('/queue/update-priorities/')
+  } catch (error) {
+    console.error('Error updating priorities:', error)
+    throw new Error('Failed to update priorities')
+  }
+}
+
+export const provideFeedback = async (
+  patientId: string,
+  actualWaitTime: number,
+  satisfactionScore: number,
+  resourceUtilization: number = 0.5
+): Promise<void> => {
+  try {
+    await api.post('/feedback/', null, {
+      params: {
+        patient_id: patientId,
+        actual_wait_time: actualWaitTime,
+        satisfaction_score: satisfactionScore,
+        resource_utilization: resourceUtilization,
+      },
+    })
+  } catch (error) {
+    console.error('Error providing feedback:', error)
+    throw new Error('Failed to provide feedback')
+  }
+}
+
+export default api
