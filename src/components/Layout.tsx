@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { 
@@ -16,6 +16,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation()
+  const [currentTime, setCurrentTime] = useState(new Date())
   
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
@@ -24,6 +25,32 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Results', href: '/results', icon: Activity },
     { name: 'Admin', href: '/admin', icon: Settings },
   ]
+
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    })
+  }
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
@@ -71,10 +98,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               })}
             </nav>
 
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1 text-sm text-gray-500">
-                <Clock className="w-4 h-4" />
-                <span>{new Date().toLocaleTimeString()}</span>
+            <div className="flex items-center space-x-3">
+              <div className="hidden sm:flex items-center space-x-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
+                <Clock className="w-4 h-4 text-blue-600" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-gray-900 leading-none">
+                    {formatTime(currentTime)}
+                  </span>
+                  <span className="text-xs text-gray-500 leading-none mt-0.5">
+                    {formatDate(currentTime)}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Mobile time display */}
+              <div className="sm:hidden flex items-center space-x-1 bg-gray-50 rounded-lg px-2 py-1 border border-gray-200">
+                <Clock className="w-3 h-3 text-blue-600" />
+                <span className="text-xs font-medium text-gray-900">
+                  {formatTime(currentTime)}
+                </span>
               </div>
             </div>
           </div>
